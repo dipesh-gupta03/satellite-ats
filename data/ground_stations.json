@@ -1,0 +1,6 @@
+[
+  { "id": "gs-delhi",   "name": "New Delhi",     "lat": 28.6139,  "lon": 77.2090,  "alt_m": 216, "elevation_mask_deg": 5 },
+  { "id": "gs-houston", "name": "Houston",        "lat": 29.7604,  "lon": -95.3698, "alt_m": 15,  "elevation_mask_deg": 5 },
+  { "id": "gs-madrid",  "name": "Madrid (ESAC)",  "lat": 40.4168,  "lon": -3.7038,  "alt_m": 667, "elevation_mask_deg": 5 },
+  { "id": "gs-tokyo",   "name": "Tokyo",          "lat": 35.6762,  "lon": 139.6503, "alt_m": 40,  "elevation_mask_deg": 5 }
+]

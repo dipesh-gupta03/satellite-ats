@@ -1,0 +1,38 @@
+version: "3.9"
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    ports: ["3000:3000"]
+    depends_on: [backend]
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    ports: ["4000:4000"]
+    env_file: .env
+    depends_on: [propagator, postgres, redis]
+
+  propagator:
+    build:
+      context: ./propagator
+      dockerfile: ../docker/Dockerfile.propagator
+    ports: ["8001:8001"]
+    env_file: .env
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orbitguard
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+volumes:
+  pgdata:
