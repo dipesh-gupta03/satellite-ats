@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from api.routes import router
 
-app = FastAPI(title="OrbitGuard Propagator", version="0.1.0")
+app = FastAPI(title="satellite-ats Propagator", version="0.1.0")
 app.include_router(router, prefix="/api")
 
 if __name__ == "__main__":

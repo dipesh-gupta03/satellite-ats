@@ -1,36 +1,40 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
 const cors = require('cors');
-
-const satelliteRoutes = require('./routes/satellites');
-const conjunctionRoutes = require('./routes/conjunctions');
-const stationRoutes = require('./routes/stations');
-const debrisRoutes = require('./routes/debris');
-const { startTleSync } = require('./services/tleSync');
-const { startAlertEngine } = require('./services/alertEngine');
-const errorHandler = require('./middleware/errorHandler');
+const { fetchTLEs, getTLECache } = require('./services/tleSync');
+const axios = require('axios');
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
-
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/satellites', satelliteRoutes);
-app.use('/api/conjunctions', conjunctionRoutes);
-app.use('/api/stations', stationRoutes);
-app.use('/api/debris', debrisRoutes);
-app.use(errorHandler);
+fetchTLEs();
 
-io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-  socket.on('disconnect', () => console.log('Client disconnected:', socket.id));
+app.get('/api/satellites/tle', (req, res) => {
+    res.json(getTLECache());
 });
 
-startTleSync();
-startAlertEngine(io);
+app.get('/api/satellites/positions', async (req, res) => {
+    const tles = getTLECache();
+    const now = new Date().toISOString();
+    const sample = tles.slice(0, 500);
 
-const PORT = process.env.BACKEND_PORT || 4000;
-server.listen(PORT, () => console.log(`Backend running on :${PORT}`));
+    try {
+        const results = await Promise.all(
+            sample.map(sat =>
+                axios.post('http://localhost:8001/api/propagate', {
+                    tle_line1: sat.tle_line1,
+                    tle_line2: sat.tle_line2,
+                    epoch_utc: now
+                })
+                .then(r => ({ name: sat.name, ...r.data.geodetic }))
+                .catch((err) => { console.log('Failed:', sat.name, err.message); return null; })
+            )
+        );
+        res.json(results.filter(Boolean));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+const PORT = 4000;
+app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
